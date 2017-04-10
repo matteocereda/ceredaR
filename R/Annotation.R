@@ -20,16 +20,18 @@ set_damaging = function(x, med=10, high=20){
 
 }
 
-get_HGNC_isoform = function(x, y="/Users/mcereda/Lavoro/HGNC_1612.Rdata"){
-  if(file.exists(y)){
-    load(y)
-  }else{
-    stop(message("Missing HGNC file"))
-  }
+get_HGNC_isoform = function(x){
+  data("hgnc")
+  # , y="/Users/mcereda/Lavoro/HGNC_1612.Rdata"
+  # if(file.exists(y)){
+  #   load(y)
+  # }else{
+  #   stop(message("Missing HGNC file"))
+  # }
   x$hgnc_canonical_refseq=NA
   x$alternative_refseq=NA
 
-  require(GenomicRanges)
+  suppressPackageStartupMessages(require(GenomicRanges))
 
   hgnc = hgnc[which(!is.na(hgnc$chromosome)),]
 
@@ -65,7 +67,7 @@ get_HGNC_isoform = function(x, y="/Users/mcereda/Lavoro/HGNC_1612.Rdata"){
 }
 
 set_genes_in_haloplex = function(x, fname="~/UV2_remote/epigenetics/Capture_kits/Agilent_Haloplex.Hematopoietic/04818-1466508813_Amplicons.bed"){
-  require(GenomicRanges)
+  suppressPackageStartupMessages(require(GenomicRanges))
   target = read.delim(file=fname, skip=2, h=F)
   a = with(x, GRanges( seqnames = Chr, IRanges( start = Start, end = End ) ) )
   b = GRanges( seqnames = target[,1], IRanges( start = target[,2], end = target[,3] ) )
@@ -76,7 +78,6 @@ set_genes_in_haloplex = function(x, fname="~/UV2_remote/epigenetics/Capture_kits
 }
 
 set_annotations_after_ANNOVAR <- function(annot, my_cancer_site, target_file_bed="~/UV2/epigenetics/Capture_kits/Agilent_Haloplex.Hematopoietic/04818-1466508813_Amplicons.bed") {
-  require(ceredaR)
   data(cancerGenes)
   data("panel_drug")
   chroms = c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8",
