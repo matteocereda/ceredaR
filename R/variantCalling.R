@@ -121,9 +121,9 @@ get_VarScan_somatic = function( folder, pattern='.varscan2.vcf'){
   hs
 }
 
-filter_varscan_2 = function(PWD, MIN_ALLELE_FREQ = 0.001, MIN_COV_POSITION = 10 ){
+filter_varscan_2 = function(PWD, PATTERN='varscan', MIN_ALLELE_FREQ = 0.001, MIN_COV_POSITION = 10 ){
   print("Reading VARSCAN2 results ...")
-  v = get_VarScan_somatic(PWD, 'varscan')
+  v = get_VarScan_somatic(PWD, PATTERN)
 
   snp=grep('snp',names(v))
   indel=grep('indel',names(v))
@@ -131,10 +131,16 @@ filter_varscan_2 = function(PWD, MIN_ALLELE_FREQ = 0.001, MIN_COV_POSITION = 10 
   s = v[snp]
   i = v[indel]
 
-  names(s) = sapply(strsplit(names(s),"\\."),'[[',1)
-  names(i) = sapply(strsplit(names(i),"\\."),'[[',1)
+  names(s) = sapply(s, function(x) x$sample[[1]])
+  names(i) = sapply(i, function(x) x$sample[[1]])
 
-  cn = intersect(colnames(s[[1]]),colnames(i[[1]]))
+  # cn = intersect(colnames(s[[1]]),colnames(i[[1]]))
+  cn =c(
+   "chr","start","end","strand","ref","alt","totalDepth","refDepth","altDepth"
+   ,"sampleNames" ,"DP","SOMATIC"
+   ,"SS","SSC","GPV", "SPV","GT","GQ"  , "RD","FREQ","DP4",
+    "key","totalDepth.NORMAL","refDepth.NORMAL","altDepth.NORMAL","sample")
+  
   s = lapply(s, function(x,y){ x[,y]}, y=cn)
   i = lapply(i, function(x,y){ x[,y]}, y=cn)
 
