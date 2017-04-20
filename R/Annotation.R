@@ -55,6 +55,7 @@ get_HGNC_isoform = function(x){
         if(!is.na(x[1]) & !is.na(y)){
           id =grep(y,x)
           x = ifelse(!is.null(id), x[id], NA)
+          x = paste(x, collapse = "|")
           return(x)
         }else{
           return(NA)
