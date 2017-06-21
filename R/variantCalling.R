@@ -111,7 +111,7 @@ get_VarScan = function( folder, pattern='.varscan2.vcf'){
   hs
 }
 
-get_VarScan_somatic = function( folder, pattern='.varscan2.vcf'){
+get_VarScan_somatic = function(folder, pattern='.varscan2.vcf'){
   f = list.files(folder, pattern, full.names = T)
   n = list.files(folder,pattern, full.names = F)
   n = gsub(pattern,"",n)
@@ -140,7 +140,7 @@ filter_varscan_2 = function(PWD, PATTERN='varscan', MIN_ALLELE_FREQ = 0.001, MIN
    ,"sampleNames" ,"DP","SOMATIC"
    ,"SS","SSC","GPV", "SPV","GT","GQ"  , "RD","FREQ","DP4",
     "key","totalDepth.NORMAL","refDepth.NORMAL","altDepth.NORMAL","sample")
-  
+
   s = lapply(s, function(x,y){ x[,y]}, y=cn)
   i = lapply(i, function(x,y){ x[,y]}, y=cn)
 
