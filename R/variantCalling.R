@@ -47,22 +47,30 @@ filter_mutect_1 = function(PWD, MIN_ALLELE_FREQ = 0.001, MIN_COV_POSITION = 10){
 
 read.varscan.vcf=function(vcffile, sample, exome.gr=NULL) {
   suppressPackageStartupMessages(require(VariantAnnotation))
-  vvcf=readVcf(vcffile, genome="hg19")
-  t.depth=geno(vvcf)$DP[,1]
-  t.ref.count=geno(vvcf)$RD[,1]
-  t.alt.count=geno(vvcf)$AD[,1]
-  t.freq=as.numeric(gsub("%", "", geno(vvcf)$FREQ))/100
+  # vvcf=readVcf(vcffile, genome="hg19")
+  vvcf=as.data.frame(readVcfAsVRanges(vcffile, genome="hg19"))
+  colnames(vvcf)[1]='chr'
+  vvcf$key=paste0(vvcf$chr,":",vvcf$start,"-",vvcf$end,"_",vvcf$ref,"_",vvcf$alt)
 
-  ADF=geno(vvcf)$ADF[,1]
-  ADR=geno(vvcf)$ADF[,1]
+  vvcf$FREQ=as.numeric(gsub("%", "", vvcf$FREQ))/100
 
-  v.info=as.data.frame(vvcf@rowRanges)
-  REF=as.data.frame(vvcf@fixed$REF)[,1]
-  ALT=as.data.frame(vvcf@fixed$ALT)[,3]
-  ss = unlist(strsplit(sample,"\\."))[1]
-  return(data.frame(v.info[,1:3], REF, ALT, DP= t.depth, DP.R=t.ref.count, DP.A=t.alt.count,t.freq
-                    , ADF=ADF, ADR=ADR, sample=ss))
-}
+  vvcf$sample=unlist(strsplit(sample,"\\."))[1]
+
+  # t.depth=geno(vvcf)$DP[,1]
+  # t.ref.count=geno(vvcf)$RD[,1]
+  # t.alt.count=geno(vvcf)$AD[,1]
+  #
+  # ADF=geno(vvcf)$ADF[,1]
+  # ADR=geno(vvcf)$ADF[,1]
+  #
+  # v.info=as.data.frame(vvcf@rowRanges)
+  # REF=as.data.frame(vvcf@fixed$REF)[,1]
+  # ALT=as.data.frame(vvcf@fixed$ALT)[,3]
+  # ss = unlist(strsplit(sample,"\\."))[1]
+  # return(data.frame(v.info[,1:3], REF, ALT, DP= t.depth, DP.R=t.ref.count, DP.A=t.alt.count,t.freq
+  #                   , ADF=ADF, ADR=ADR, sample=ss))
+  return(vvcf)
+  }
 
 read.varscan.somatic.vcf=function(vcffile, sample, exome.gr=NULL) {
   suppressPackageStartupMessages(require(VariantAnnotation))
@@ -151,13 +159,61 @@ filter_varscan_2 = function(PWD, PATTERN='varscan', MIN_ALLELE_FREQ = 0.001, MIN
   print("Filter checks ...")
 
   varscan = lapply(varscan, function(x){
+
+    tmp = strsplit(x$DP4, "\\,")
+    x$ADF= sapply(tmp,"[[",3)
+    x$ADR= sapply(tmp,"[[",4)
     subset(x,
            DP>=MIN_COV_POSITION
-           # & (ADF>0 & ADR>0)
+
+           & (ADF>0 & ADR>0) # nelle versioni precendeti al 170831 non facevo il controllo sullo strand bias....
+
            & FREQ>=MIN_ALLELE_FREQ)
   })
   varscan
 }
+
+
+filter_varscan_no_normal = function(PWD, PATTERN='varscan', MIN_ALLELE_FREQ = 0.001, MIN_COV_POSITION = 10 ){
+  print("Reading VARSCAN2 results ...")
+  v = get_VarScan(PWD, PATTERN)
+
+  cn =c(
+    "chr","start","end","strand","ref","alt","totalDepth","refDepth","altDepth"
+    ,"sampleNames"
+    # ,"DP","SOMATIC"
+    # ,"SS","SSC","GPV", "SPV",
+    ,"GT","GQ", "RD","FREQ","ADR", "ADF",
+    "key"
+    # ,"totalDepth.NORMAL","refDepth.NORMAL","altDepth.NORMAL"
+    ,"sample")
+
+  v = lapply(v, function(x,y){ x[,y]}, y=cn)
+
+  ii = grep('indel',names(v))
+  varscan=v
+
+  if(length(ii)>0){
+    i = v[ii]
+    names(i) = sapply(i, function(x) x$sample[[1]])
+    if(length(ii)!=length(names(v))){
+      s = v[-ii]
+      names(s) = sapply(s, function(x) x$sample[[1]])
+      varscan = mapply(rbind, s, i, SIMPLIFY = F)
+    }
+  }
+
+      print("Filter checks ...")
+
+  varscan = lapply(varscan, function(x){
+    subset(x,
+           totalDepth>=MIN_COV_POSITION
+           & (ADF>0 & ADR>0)
+           & FREQ>=MIN_ALLELE_FREQ)
+  })
+  varscan
+}
+
 
 
 # MERGE MUTECT VARSCAN 2 =====================

@@ -71,7 +71,7 @@ set_genes_in_haloplex = function(x, fname="~/UV2_remote/epigenetics/Capture_kits
   suppressPackageStartupMessages(require(GenomicRanges))
   target = read.delim(file=fname, skip=2, h=F)
   a = with(x, GRanges( seqnames = Chr, IRanges( start = Start, end = End ) ) )
-  b = GRanges( seqnames = target[,1], IRanges( start = target[,2], end = target[,3] ) )
+  b = GRanges( seqnames = target[,1], IRanges( start = target[,2]+1, end = target[,3] ) )
   ov = findOverlaps(a,b)
   x$in_gene_panel=F
   x$in_gene_panel[ queryHits(ov) ] = T
