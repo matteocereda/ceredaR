@@ -287,4 +287,34 @@ merge_mutect_varscan_somatic = function(m,v,show.plot=TRUE){
   df
 }
 
+merge_mutect_varscan = function(m,v,show.plot=TRUE){
+
+  m = m[,c("key","tot_cov","tumor_f")]
+  colnames(m)=c("key","DP","FREQ")
+  v = v[,c("key","totalDepth","FREQ")]
+  colnames(v)=c("key","DP","FREQ")
+
+  require(gplots)
+  ven = venn(list('Mutect1.17'=m$key, "VarScan2"=v$key), show.plot = show.plot)
+  df = rbind()
+  if(!is.null(ven)){
+
+    A = cbind()
+    B = cbind()
+    C = cbind()
+    ids = attr(ven,"intersections")
+
+    if(length(ids[['Mutect1.17']])>0) A=cbind( subset(m, key%in%ids[['Mutect1.17']]), method='Mutect1.17')
+    if(length(ids[['Mutect1.17:VarScan2']])>0) B=cbind( subset(v, key%in%ids[['Mutect1.17:VarScan2']]), method='Mutect1.17:VarScan2')
+    if(length(ids[['VarScan2']])>0) C=cbind( subset(v, key%in%ids[['VarScan2']]), method='VarScan2')
+
+    if(!is.null(A)) if(nrow(A)>0) df=rbind(df, A)
+    if(!is.null(B)) if(nrow(B)>0) df=rbind(df, B)
+    if(!is.null(C)) if(nrow(C)>0) df=rbind(df, C)
+
+
+  }
+  df
+}
+
 
